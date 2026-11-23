@@ -55,11 +55,12 @@ from .views import LogoutView
 
 
 router = DefaultRouter()
-router.register(r'notes', NoteViewSet, basename='note')
+router.register(r'', NoteViewSet, basename='note')
 router.register(r'categories', CategoryViewSet, basename='category')
 urlpatterns = [
-    path('', include(router.urls)),
-    path('auth/token/', obtain_auth_token, name='api-token'),  #  обычный токен
+    path('notes/', include(router.urls)),
+    path('auth/token/', obtain_auth_token, name='api-token'),
+    # path('auth/token/', obtain_auth_token, name='api-token'),  #  обычный токен
     path('auth/logout/', LogoutView.as_view(),name='api-logout'),
     # path('stats/', NoteStatsAPIView.as_view(), name='note-stats'),   
 ]

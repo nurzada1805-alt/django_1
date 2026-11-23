@@ -14,6 +14,10 @@ from pathlib import Path
 from datetime import timedelta
 
 import environ
+import sys
+
+TESTING = 'test' in sys.argv
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -173,13 +177,15 @@ REST_FRAMEWORK = {
 
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 
-    'DEFAULT_THROTTLE_CLASSES': [
+    'DEFAULT_THROTTLE_CLASSES': ( 
+    [] if TESTING else [
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle',
         'rest_framework.throttling.ScopedRateThrottle',
-    ],
+    ]
+),
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '5/minute',      # анонимы — по IP
+        'anon': '100/minute',      # анонимы — по IP
         'user': '300/minute',     # вошедшие — по id пользователя
         'auth': '5/minute',       # вход и регистрация (throttle_scope = 'auth')
         'register': '3/hour',     # регистрация (throttle_scope = 'register')
@@ -193,6 +199,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
+    'SIGNING_KEY': env('JWT_SECRET_KEY'),
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,          # при refresh выдавать и новый refresh

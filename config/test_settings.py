@@ -6,3 +6,10 @@ CACHES = {'default':
           {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
 # 401 и 404 в тестах — норма; предупреждения о них только засоряют вывод
 LOGGING['root']['level'] = 'ERROR' # noqa: F405
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'test_db.sqlite3',
+    }
+}

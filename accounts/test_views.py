@@ -30,8 +30,9 @@ class JWTFlowTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access}')
         response = self.client.get(reverse('me'))
         self.assertEqual(response.data['username'], 'lena')
- 
-        # 4. Обновление: при ротации приходит и новый refresh
+
+
+# 4. Обновление: при ротации приходит и новый refresh
         response = self.client.post(reverse('token_refresh'), {'refresh': refresh},
                                     format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -105,6 +106,8 @@ class ProfileTests(APITestCase):
  
     def test_change_password_revokes_old_tokens(self):
         old = self.login()
+
+
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {old['access']}")
         response = self.client.post(reverse('change_password'), {
             'old_password': 'StrongPass123', 'new_password': 'NewStrongPass456',

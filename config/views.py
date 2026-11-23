@@ -2,6 +2,25 @@ from django.core.cache import cache
 from django.db import connection
 from django.http import JsonResponse
 
+
+def home(request):
+    return JsonResponse({
+        "project": "DRF Notes API",
+        "version": "1.0.0",
+        "status": "running",
+        "documentation": {
+            "swagger": "/api/docs/",
+            "redoc": "/api/redoc/",
+            "schema": "/api/schema/",
+        },
+        "endpoints": {
+            "health": "/api/health/",
+            "auth": "/api/auth/",
+            "admin": "/admin/",
+        }
+    })
+
+
 def health(request):
     """Жив ли сервис: отвечает ли база и кеш. Для Docker, nginx и мониторинга."""
     status = {'database': 'ok', 'cache': 'ok'}

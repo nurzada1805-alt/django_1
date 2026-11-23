@@ -51,13 +51,14 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import (SpectacularAPIView, SpectacularRedocView,
 SpectacularSwaggerView)
-from .views import health
+from .views import health, home
 
 
 urlpatterns = [
-    path('api/health/', health, name='health'),
+    path('', home, name='home'),
     path('admin/', admin.site.urls),
-    # path('api/', include('notes.urls')),
+    path('api/health/', health, name='health'),
+    path('api/', include('notes.urls')),
     path('api/auth/', include('accounts.urls')),     # было: include('notes.auth_urls')
     # path('api-auth/', include('rest_framework.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

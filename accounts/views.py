@@ -15,7 +15,31 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.contrib.auth.models import User
 
+from rest_framework import generics
+from rest_framework.permissions import AllowAny
+from rest_framework.throttling import ScopedRateThrottle
+
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+from rest_framework.throttling import ScopedRateThrottle
+
+
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = [AllowAny]
+
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'register'
+
+
+class LoginView(TokenObtainPairView):
+    permission_classes = [AllowAny]
+
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth'
  
  
 class RegisterView(generics.CreateAPIView):

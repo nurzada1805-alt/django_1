@@ -25,6 +25,9 @@ USER app
 
 EXPOSE 8000
 
-ENTRYPOINT ["/app/docker/entrypoint.sh"]
+# ENTRYPOINT ["/app/docker/entrypoint.sh"]
+COPY docker/entrypoint.sh /entrypoint.sh
 
-CMD ["gunicorn", "config.wsgi"]
+ENTRYPOINT ["/entrypoint.sh"]
+
+# CMD ["gunicorn", "config.wsgi"]

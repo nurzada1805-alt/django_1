@@ -280,7 +280,7 @@ from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView 
+from rest_framework.views import APIView
  
 from .filters import NoteFilter
 from .models import Category, Note
@@ -288,20 +288,22 @@ from .pagination import NotePagination
 from .permissions import IsAuthorOrReadOnly, ReadOnly
 from .serializers import CategoryWithCountSerializer, NoteSerializer
 from .throttles import NoteCreateThrottle
-from django.http import HttpResponse
-from rest_framework.views import APIView
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # Логика выхода (например, удаление токена)
-        return Response({"detail": "Successfully logged out."})
-
-def health(request):
-    return HttpResponse("OK")
- 
+        if hasattr(request, "auth") and request.auth is not None:
+            request.auth.delete()
+        elif hasattr(request.user, "auth_token"):
+            request.user.auth_token.delete()
+        return Response({"detail": "Logged out."}, status=status.HTTP_200_OK)
+    
  
 class NoteViewSet(viewsets.ModelViewSet):
     """Заметки текущего пользователя: CRUD, фильтры, поиск, сортировка."""
@@ -312,18 +314,6 @@ class NoteViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'text', 'category__name']
     ordering_fields = ['created_at', 'title', 'is_done']
     ordering = ['-created_at']
-
-    @extend_schema(request=None, responses={204: None})
-    @action(detail=True, methods=['delete'], url_path='attachment')
-    def delete_attachment(self, request, pk=None):
-        note = self.get_object()
-        note.attachment.delete(save=True)   # файл с диска + пустое поле в базе
-        return Response(status=status.HTTP_204_NO_CONTENT)
- 
-    def perform_destroy(self, instance):
-        instance.attachment.delete(save=False)
-        instance.delete()
-
  
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
@@ -387,27 +377,13 @@ class NoteStatsAPIView(APIView):
             'total': serializers.IntegerField(),
             'done': serializers.IntegerField(),
             'active': serializers.IntegerField(),
-            'by_category': inline_serializer(
-                name='CategoryStats',
-                many=True,
-                fields={
-                    'category_name': serializers.CharField(allow_null=True),
-                    'total': serializers.IntegerField(),
-                    'done': serializers.IntegerField(),
-                },
-            ),
         },
     ))
     def get(self, request):
-        notes = Note.objects.filter(author=request.user)
-        stats = notes.aggregate(
+        stats = Note.objects.filter(author=request.user).aggregate(
             total=Count('id'),
             done=Count('id', filter=Q(is_done=True)),
         )
         stats['active'] = stats['total'] - stats['done']
-        stats['by_category'] = list(
-            notes.values(category_name=F('category__name'))
-            .annotate(total=Count('id'), done=Count('id', filter=Q(is_done=True)))
-            .order_by(F('category_name').asc(nulls_last=True))  # «без категории» — в конце
-        )
         return Response(stats)
+

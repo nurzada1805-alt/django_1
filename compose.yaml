@@ -30,9 +30,9 @@ services:
     build: .
     image: notes-web:${TAG:-latest} # у каждой сборки — своя метка
     environment:
-      DEBUG: "True"
+      # DEBUG: "True"
       CACHE_URL: "redis://redis:6379/1"
-      SECRET_KEY: "12345"
+      # SECRET_KEY: "12345"
       NUM_PROXIES: "1"
     command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
     volumes:
@@ -52,6 +52,7 @@ services:
       retries: 5
       start_period: 20s
     restart: unless-stopped
+    
 
   nginx:
     image: nginx:1.27-alpine
