@@ -1,82 +1,69 @@
 from rest_framework import serializers
-from .models import Note,Category
-from django.contrib.auth import password_validation
-from django.contrib.auth.models import User
+ 
+from .models import Category, Note
+ 
+MAX_ATTACHMENT_SIZE = 2 * 1024 * 1024  # 2 МБ
  
  
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'email']
- 
- 
-class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=8,
-                                     style={'input_type': 'password'})
- 
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'email', 'password']
- 
-    def validate_password(self, value):
-        password_validation.validate_password(value)
-        return value
- 
-    def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
-
- 
- 
-class NoteSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    title = serializers.CharField(max_length=200)
-    text = serializers.CharField(required=False, allow_blank=True)
-    is_done = serializers.BooleanField(default=False)
-    created_at = serializers.DateTimeField(read_only=True)
-    priority = serializers.IntegerField(default=1)
-
-
-    def create(self, validated_data):
-        """Вызывается из save(), когда объекта ещё нет."""
-        return Note.objects.create(**validated_data)
- 
-    def update(self, instance, validated_data):
-        """Вызывается из save(), когда объект передан первым аргументом."""
-        instance.title = validated_data.get('title', instance.title)
-        instance.text = validated_data.get('text', instance.text)
-        instance.is_done = validated_data.get('is_done', instance.is_done)
-        instance.priority = validated_data.get('priority', instance.priority)
-        instance.save()
-        return instance
-
 class CategorySerializer(serializers.ModelSerializer):
- 
     class Meta:
         model = Category
         fields = ['id', 'name', 'slug']
-    
  
-    
+ 
+class CategoryWithCountSerializer(CategorySerializer):
+    """Категория + сколько в ней заметок текущего пользователя."""
+    notes_count = serializers.IntegerField(read_only=True)
+ 
+    class Meta(CategorySerializer.Meta):
+        fields = CategorySerializer.Meta.fields + ['notes_count']
+ 
+ 
 class NoteSerializer(serializers.ModelSerializer):
+    """Читаем связь вложенным объектом, пишем по id."""
     category = CategorySerializer(read_only=True)
-    status=serializers.SerializerMethodField()
-  
-
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(),
+        source='category',
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
+    author = serializers.CharField(source='author.username', read_only=True)
+    status = serializers.SerializerMethodField()
+ 
     class Meta:
-        model=Note
-        fields=['id', 'title','category','author', 'text', 'is_done', 'created_at','priority','status']
+        model = Note
+        fields = ['id', 'title', 'text', 'status', 'is_done',
+                  'category', 'category_id', 'author', 'attachment', 'created_at']
         read_only_fields = ['id', 'created_at']
         extra_kwargs = {
-    'title': {
-        'error_messages': {
-            'required': 'Без заголовка никак',        # ключа нет
-            'blank': 'Заголовок не может быть пустым',  # ключ есть, значение ''
-        },
-        'help_text': 'Коротко: о чём заметка',
-    },
-    'text': {'required': True},
-}
-        
+            'title': {'error_messages': {'required': 'Введите заголовок'}},
+        }
+ 
     def get_status(self, obj) -> str:
         return 'выполнена' if obj.is_done else 'в работе'
+ 
+    def validate_title(self, value):
+        value = value.strip()
+        if len(value) < 3:
+            raise serializers.ValidationError('Минимум 3 символа')
+        if value.isdigit():
+            raise serializers.ValidationError('Заголовок не может быть числом')
+        return value
+ 
+    def validate_attachment(self, value):
+        if value and value.size > MAX_ATTACHMENT_SIZE:
+            raise serializers.ValidationError('Файл больше 2 МБ')
+        return value
+ 
+    def validate(self, attrs):
+        is_done = attrs.get('is_done', getattr(self.instance, 'is_done', False))
+        text = attrs.get('text', getattr(self.instance, 'text', ''))
+        if is_done and not text:
+            raise serializers.ValidationError(
+                {'text': 'Нельзя закрыть заметку без описания'}
+            )
+        return attrs
+
 

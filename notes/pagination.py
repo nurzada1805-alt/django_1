@@ -21,12 +21,20 @@
 
 
 
-from rest_framework.pagination import CursorPagination
+# from rest_framework.pagination import CursorPagination
  
  
-class NoteCursorPagination(CursorPagination):
-    page_size = 10
-    ordering = '-created_at'           # обязательно!
+# class NoteCursorPagination(CursorPagination):
+#     page_size = 10
+#     ordering = '-created_at'           # обязательно!
  
 # GET /api/notes/
 # {"next": ".../?cursor=cD0yMDI2LTEwLTAy...", "previous": null, "results": [...]}
+
+
+from rest_framework.pagination import PageNumberPagination
+
+class NotePagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100

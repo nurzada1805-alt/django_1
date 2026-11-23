@@ -14,25 +14,57 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path, include
-from drf_spectacular.views import (SpectacularAPIView, SpectacularRedocView,
-                                   SpectacularSwaggerView)
+# from django.contrib import admin
+# from django.urls import path, include
+# from drf_spectacular.views import (SpectacularAPIView, SpectacularRedocView,
+#                                    SpectacularSwaggerView)
+# from django.conf import settings
+# from django.conf.urls.static import static
+# from notes.views import health  
+
+
+# # urlpatterns = [
+# #     path('admin/', admin.site.urls),
+# #     path('api/', include('notes.urls')),
+# #     path('api-auth/', include('rest_framework.urls')),
+# # ]
 
 # urlpatterns = [
-#     path('admin/', admin.site.urls),
-#     path('api/', include('notes.urls')),
-#     path('api-auth/', include('rest_framework.urls')),
-    
+#     # path('admin/', admin.site.urls),
+#     # path('api/', include('notes.urls')),
+#     path('api/auth/', include('accounts.urls')),     
+#     # path('api-auth/', include('rest_framework.urls')),
+#     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+#     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+#     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+#     path(settings.ADMIN_URL, admin.site.urls),
+#     path('api/health/', health, name='health'),
 # ]
 
+# if settings.DEBUG:
+#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
+from drf_spectacular.views import (SpectacularAPIView, SpectacularRedocView,
+SpectacularSwaggerView)
+from .views import health
+
+
 urlpatterns = [
+    path('api/health/', health, name='health'),
     path('admin/', admin.site.urls),
-    path('api/', include('notes.urls')),
-    path('api/auth/', include('notes.auth_urls')),
+    # path('api/', include('notes.urls')),
+    path('api/auth/', include('accounts.urls')),     # было: include('notes.auth_urls')
     # path('api-auth/', include('rest_framework.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-
 ]
+
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

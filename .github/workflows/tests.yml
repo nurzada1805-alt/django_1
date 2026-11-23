@@ -1,0 +1,42 @@
+name: tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: notes
+          POSTGRES_USER: notes
+          POSTGRES_PASSWORD: notes
+        ports:
+          - 5432:5432
+      options: >-
+        --health-cmd "pg_isready -U notes"
+        --health-interval 5s
+        --health-timeout 3s
+        --health-retries 10
+env:
+  SECRET_KEY: ci-only-not-secret
+  DATABASE_URL: postgres://notes:notes@localhost:5432/notes
+steps:
+- uses: actions/checkout@v7
+- uses: actions/setup-python@v7
+  with:
+    python-version: '3.13'
+    cache: pip
+- name: Install dependencies
+run: pip install -r requirements-dev.txt
+- name: Check
+run: |
+  python manage.py check
+  python manage.py makemigrations --check --dry-run
+  python manage.py spectacular --file schema.yml --validate --fail-on-warn
+- name: Tests
+  run: |
+    coverage run manage.py test --settings=config.test_settings
+    coverage report --fail-under=9

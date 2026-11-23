@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from django.core.validators import FileExtensionValidator
  
  
 class Category(models.Model):
@@ -10,6 +10,7 @@ class Category(models.Model):
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
+        ordering = ['name']
  
     def __str__(self):
         return self.name
@@ -36,6 +37,11 @@ class Note(models.Model):
         on_delete=models.CASCADE,
         null=True, blank=True,
     )
+    attachment = models.FileField(
+        'Вложение', upload_to='attachments/%Y/%m/', blank=True,
+        validators=[FileExtensionValidator(['pdf', 'png', 'jpg', 'jpeg', 'txt'])],
+    )
+
  
     class Meta:
         verbose_name = 'Заметка'
