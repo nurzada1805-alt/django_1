@@ -1,9 +1,5 @@
-
-
 services:
   db:
-    ports:
-      - "5432:5432"
     image: postgres:16-alpine
     env_file: .env
     volumes:
@@ -16,8 +12,6 @@ services:
     restart: unless-stopped
 
   redis:
-    ports:
-      - "6379:6379"
     image: redis:7-alpine
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -28,42 +22,43 @@ services:
 
   web:
     build: .
-    image: notes-web:${TAG:-latest} # у каждой сборки — своя метка
+    image: notes-web:${TAG:-latest}  # у каждой сборки — своя метка
+    env_file: .env
     environment:
-      # DEBUG: "True"
-      CACHE_URL: "redis://redis:6379/1"
-      # SECRET_KEY: "12345"
-      NUM_PROXIES: "1"
-    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+      # Внутри сети compose хосты называются по именам сервисов
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      CACHE_URL: redis://redis:6379/1
+      NUM_PROXIES: 1
     volumes:
-      - .:/app
       - static:/app/staticfiles
       - media:/app/media
-    env_file: .env
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health/', timeout=3)"]
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/')"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 20s
     restart: unless-stopped
-    
 
   nginx:
     image: nginx:1.27-alpine
     ports:
       - "80:80"
+      # После получения сертификата (часть 35.3):
+      # - "443:443"
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro # папку, а не файл: правки видны без пересоздания
-      - ./certbot/www:/var/www/certbot:ro
-      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./nginx:/etc/nginx/conf.d:ro   # папку, а не файл: правки видны без пересоздания
       - static:/var/www/static:ro
       - media:/var/www/media:ro
+      # Файлы проверки Let's Encrypt и сертификаты (часть 35.3):
+      # - ./certbot/www:/var/www/certbot:ro
+      # - ./certbot/conf:/etc/letsencrypt:ro
     depends_on:
       web:
         condition: service_healthy

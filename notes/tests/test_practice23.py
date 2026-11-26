@@ -1,5 +1,5 @@
 from rest_framework import status
-from rest_framework.reverse import reverse
+from django.urls import reverse
 from notes.models import Note
 from .base import NotesAPITestCase  
 

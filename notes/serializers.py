@@ -29,7 +29,7 @@ class NoteSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True,
     )
-    author = serializers.CharField(source='author.username', read_only=True)
+    author = serializers.CharField(source='author.username', read_only=True, allow_null=True)
     status = serializers.SerializerMethodField()
  
     class Meta:

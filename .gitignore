@@ -5,7 +5,11 @@ __pycache__/
 .env
 *.sqlite3
 .coverage
+htmlcov/
+media/
 staticfiles/
-*.sql
-*.tar.gz
-*.zip
+backups/
+certbot/
+schema.yml
+.DS_Store
+.idea/

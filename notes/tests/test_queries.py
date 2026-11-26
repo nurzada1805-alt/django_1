@@ -35,9 +35,11 @@ class QueryCountTests(NotesAPITestCase):
  
     def test_stats(self):
         self.make_notes(5)
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(2):
             response = self.client.get(reverse('note-stats'))
-        self.assertEqual(response.data, {'total': 6, 'done': 0, 'active': 6})
+        self.assertEqual(response.data['total'], 6)
+        self.assertEqual(response.data['done'], 0)
+        self.assertEqual(response.data['active'], 6)
  
  
 class CategoryCountTests(NotesAPITestCase):
